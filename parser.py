@@ -35,7 +35,7 @@ def is_ppg512(t):
         return False
 
 def is_ppg(t):
-    if t or is_ppg512(t):
+    if is_ppg125(t) or is_ppg512(t):
         return True
     else:
         return False
@@ -60,7 +60,10 @@ def parse_data(file_obj, signal_type):
         # extraction
         if is_ecg(signal_type):
             row = a[2:13]
-        elif is_ppg(signal_type):
+        elif is_ppg512(signal_type):
+            row = a[2:13]
+        elif is_ppg125(signal_type):
+            # strip ambient light
             row = a[2:13:2]
 
         # timestamp calculation
