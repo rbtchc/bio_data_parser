@@ -29,6 +29,36 @@ def low_pass_filter(data, fs, cutoff):
     b, a = signal.butter(3, normalized_cutoff, btype="lowpass", analog=False)
     return scipy.signal.filtfilt(b, a, data)
 
+def ppg125_pl_filter(x):
+    """ A map function to perform power line noise filter against ppg125 data
+    Input: numpy array
+    Output: numpy array
+    """
+    filtered = x[:,1]
+    filtered = power_line_noise_filter(filtered, PPG_FS_125)
+    filtered = np.column_stack((x[:,0], filtered))
+    return filtered
+
+def ppg125_hp_filter(x):
+    """ A map function to perform high pass filter against ppg125 data
+    Input: numpy array
+    Output: numpy array
+    """
+    filtered = x[:,1]
+    filtered = high_pass_filter(filtered, PPG_FS_125, HIGH_PASS_CUTOFF)
+    filtered = np.column_stack((x[:,0], filtered))
+    return filtered
+
+def ppg125_lp_filter(x):
+    """ A map function to perform low pass filter against ppg125 data
+    Input: numpy array
+    Output: numpy array
+    """
+    filtered = x[:,1]
+    filtered = low_pass_filter(filtered, PPG_FS_125, LOW_PASS_CUTOFF)
+    filtered = np.column_stack((x[:,0], filtered))
+    return filtered
+
 def ppg512_pl_filter(x):
     """ A map function to perform power line noise filter against ppg512 data
     Input: numpy array

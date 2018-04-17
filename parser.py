@@ -21,10 +21,16 @@ def convert_ecg_to_mv(v):
     return (v * 1000) / (6 * 2097152)
 
 def is_ecg(t):
-    if t == TYPE_ECG:
-        return True
-    else:
-        return False
+    return t == TYPE_ECG
+
+def is_ppg(t):
+    return is_ppg125(t) or is_ppg512(t)
+
+def is_ppg125(t):
+    return t == TYPE_PPG125
+
+def is_ppg512(t):
+    return t == TYPE_PPG512
 
 def parse_raw_acc(x):
     """ Parse one line of raw acc data and add it to acc data """
@@ -35,11 +41,23 @@ def parse_raw_acc(x):
     acc_data.append((ts_ms, (nums[6], nums[7], nums[8])))
     acc_data.append((ts_ms, (nums[10], nums[11], nums[12])))
 
-def parse_raw_ppg(x):
+def parse_raw_ppg125(x):
     """ Parse one line of raw ppg data and add it to ppg data """
     items = x.split(',')
     # convert ppg to mv
-    strs = items[2:13]
+    strs = items[2:13:2]
+    nums = map(int, strs)
+    nums = map(convert_ppg_to_mv, nums)
+    # convert ts to ms
+    ts_ms = int(items[15]) * MSEC_PER_SEC
+    for n in nums:
+        ppg_data.append((ts_ms, n))
+
+def parse_raw_ppg512(x):
+    """ Parse one line of raw ppg data and add it to ppg data """
+    items = x.split(',')
+    # convert ppg to mv
+    strs = items[2:14]
     nums = map(int, strs)
     nums = map(convert_ppg_to_mv, nums)
     # convert ts to ms
@@ -83,7 +101,7 @@ def calc_ts(x):
 def parse_data(file_obj, signal_type):
     """
     file_obj:    The file obj come from open() or io.BytesIO
-    signal_type: 5, 9, or 12
+    signal_type: 0, 5, 9, or 12
     return:      The list of (timestamp, mv) tuple
     """
     base_ms = 0
@@ -100,8 +118,13 @@ def parse_data(file_obj, signal_type):
         # extraction
         if is_ecg(signal_type):
             row = a[2:13]
-        elif is_ppg(signal_type):
+        elif is_ppg125(signal_type):
             row = a[2:13:2]
+        elif is_ppg512(signal_type):
+            row = a[2:14]
+        else:
+            print 'unknown type', signal_type
+            continue
 
         # timestamp calculation
         new_base_ms = int(a[15]) * MSEC_PER_SEC
