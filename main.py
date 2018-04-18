@@ -23,16 +23,11 @@ from annotation import parse_annotation, annotation_data
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('--export_csv', help='Export to csv file', action='store_true')
-    p.add_argument('--plot', help='Plot parsed data', action='store_true')
+    p.add_argument('--fft', help='Apply FFT cutoff', action='store_true')
+    p.add_argument('--plot_type', nargs=1, default=None, type=int, choices=[0, 5, 9, 12], help='0: Acc, 5: ECG, 9: PPG 125 Hz, 12: PPG 512 Hz)')
     p.add_argument('raw_data_file', nargs=1, help='Specify the raw data file')
     p.add_argument('annotation_file', nargs='?', help='Specify the annotation file')
-    p.add_argument('--type', nargs=1, default=9, help='5: ECG, 9: PPG 125 Hz, 12: PPG 512 Hz)')
     return vars(p.parse_args())
-
-def validate_args():
-    t = int(args["type"][0])
-    if t not in [0, 5, 9, 12]:
-        raise Exception("Unknown type")
 
 def group_key_generator(x):
     return x.split(',')[0]
@@ -51,7 +46,7 @@ def acc_data_handler():
     def output(x):
         if args["export_csv"]:
             np.savetxt(args["acc_csv"], x, delimiter=',')
-        if args["plot"] and int(args["type"][0]) == 0:
+        if args["plot_type"] and args["plot_type"][0] == 0:
             s = np.square(x[:,1:])
             mag = np.sum(s, axis=1)
             mag = np.column_stack((x[:,0], mag))
@@ -69,12 +64,12 @@ def ecg_data_handler():
     def output(x):
         if args["export_csv"]:
             np.savetxt(args["ecg_csv"], x, delimiter=',')
-        if args["plot"] and int(args["type"][0]) == 5:
+        if args["plot_type"] and args["plot_type"][0] == 5:
             plot_time_domain(ax1, x)
             plot_freq_domain(ax2, x[:,1], ECG_FS)
 
     # pipeline
-    if args["plot"]:
+    if args["fft"]:
         Observable.just(ecg_data)             \
                   .map(calc_ts)               \
                   .map(lambda x: np.array(x)) \
@@ -92,12 +87,12 @@ def ppg125_data_handler():
     def output(x):
         if args["export_csv"]:
             np.savetxt(args["ppg125_csv"], x, delimiter=',')
-        if args["plot"] and int(args["type"][0]) == 9:
+        if args["plot_type"] and args["plot_type"][0] == 9:
             plot_time_domain(ax1, x)
             plot_freq_domain(ax2, x[:,1], PPG_FS_125)
 
     # pipeline
-    if args["plot"]:
+    if args["fft"]:
         Observable.just(ppg_data)             \
                   .map(calc_ts)               \
                   .map(lambda x: np.array(x)) \
@@ -115,12 +110,13 @@ def ppg512_data_handler():
     def output(x):
         if args["export_csv"]:
             np.savetxt(args["ppg512_csv"], x, delimiter=',')
-        if args["plot"] and int(args["type"][0]) == 12:
+
+        if args["plot_type"] and args["plot_type"][0] == 12:
             plot_time_domain(ax1, x)
             plot_freq_domain(ax2, x[:,1], PPG_FS_512)
 
     # pipeline
-    if args["plot"]:
+    if args["fft"]:
         Observable.just(ppg_data)             \
                   .map(calc_ts)               \
                   .map(lambda x: np.array(x)) \
@@ -134,7 +130,7 @@ def ppg512_data_handler():
                   .subscribe(output)
 
 def annotation_handler():
-    if args["plot"]:
+    if args["plot_type"]:
         plot_annotation(ax1, annotation_data)
 
 def verbose(x):
@@ -145,11 +141,11 @@ def verbose(x):
 # parse arguments
 args = parse_args()
 
-ax1 = ax2 = None
-if args["plot"]:
-    _, (ax1, ax2) = plot.subplots(2, 1)
-
 print args
+
+ax1 = ax2 = None
+if args["plot_type"]:
+    _, (ax1, ax2) = plot.subplots(2, 1)
 
 # prepare something for later use
 input_file = os.path.basename(args["raw_data_file"][0])
@@ -178,5 +174,5 @@ Observable.from_(lines)                  \
           .group_by(group_key_generator) \
           .subscribe(group_by_handler)
 
-if args["plot"]:
+if args["plot_type"]:
     plot.show()
