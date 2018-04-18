@@ -84,21 +84,21 @@ def ecg_data_handler():
                   .map(lambda x: np.array(x)) \
                   .subscribe(output)
 
-def ppg125_data_handler():
+def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, fn_hp=ppg125_hp_filter, fn_lp=ppg125_lp_filter):
     def output(x):
         if args["export_csv"]:
-            np.savetxt(args["ppg125_csv"], x, delimiter=',')
-        if args["plot_type"] and args["plot_type"][0] == 9:
+            np.savetxt(args[arg_fname], x, delimiter=',')
+        if args["plot_type"] and args["plot_type"][0] == data_type:
             plot_time_domain(ax1, x)
-            plot_freq_domain(ax2, x[:,1], PPG_FS_125)
+            plot_freq_domain(ax2, x[:,1], freq)
 
     # pipeline
     if args["fft"]:
         Observable.just(ppg_data)             \
                   .map(calc_ts)               \
                   .map(lambda x: np.array(x)) \
-                  .map(ppg125_hp_filter) \
-                  .map(ppg125_lp_filter) \
+                  .map(fn_hp) \
+                  .map(fn_lp) \
                   .subscribe(output)
     else:
         Observable.just(ppg_data)             \
@@ -108,27 +108,7 @@ def ppg125_data_handler():
 
 
 def ppg512_data_handler():
-    def output(x):
-        if args["export_csv"]:
-            np.savetxt(args["ppg512_csv"], x, delimiter=',')
-
-        if args["plot_type"] and args["plot_type"][0] == 12:
-            plot_time_domain(ax1, x)
-            plot_freq_domain(ax2, x[:,1], PPG_FS_512)
-
-    # pipeline
-    if args["fft"]:
-        Observable.just(ppg_data)             \
-                  .map(calc_ts)               \
-                  .map(lambda x: np.array(x)) \
-                  .map(ppg512_hp_filter) \
-                  .map(ppg512_lp_filter) \
-                  .subscribe(output)
-    else:
-        Observable.just(ppg_data)             \
-                  .map(calc_ts)               \
-                  .map(lambda x: np.array(x)) \
-                  .subscribe(output)
+    ppg125_data_handler("ppg512_csv", 12, PPG_FS_512, ppg512_hp_filter, ppg512_lp_filter)
 
 def annotation_handler():
     if args["plot_type"]:
