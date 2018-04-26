@@ -17,6 +17,13 @@ def power_line_noise_filter(data, fs):
     b, a = signal.iirnotch(w0, Q)
     return scipy.signal.filtfilt(b, a, data)
 
+def butter_bandpass_filter(data, fs, lowcut, highcut, order=3):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = scipy.signal.butter(order, [low, high], btype='band')
+    return scipy.signal.filtfilt(b, a, data)
+
 def high_pass_filter(data, fs, cutoff):
     nyq = fs / 2.0
     normalized_cutoff = cutoff / nyq
@@ -58,6 +65,15 @@ def ppg125_lp_filter(x):
     filtered = low_pass_filter(filtered, PPG_FS_125, LOW_PASS_CUTOFF)
     filtered = np.column_stack((x[:,0], filtered))
     return filtered
+
+def ppg125_bp_filter(x, fs=PPG_FS_125):
+    filtered = x[:,1]
+    filtered = butter_bandpass_filter(filtered, fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    filtered = np.column_stack((x[:,0], filtered))
+    return filtered
+
+def ppg512_bp_filter(x):
+    return ppg125_bp_filter(x, PPG_FS_512)
 
 def ppg512_pl_filter(x):
     """ A map function to perform power line noise filter against ppg512 data

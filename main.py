@@ -13,8 +13,8 @@ from parser import calc_ts
 from parser import parse_raw_acc, acc_data
 from parser import parse_raw_ecg, ecg_data
 from parser import parse_raw_ppg125, parse_raw_ppg512, ppg_data
-from filters import ppg125_hp_filter, ppg125_lp_filter, ppg125_pl_filter
-from filters import ppg512_hp_filter, ppg512_lp_filter, ppg512_pl_filter
+from filters import ppg125_hp_filter, ppg125_lp_filter, ppg125_pl_filter, ppg125_bp_filter
+from filters import ppg512_hp_filter, ppg512_lp_filter, ppg512_pl_filter, ppg512_bp_filter
 from filters import ecg_hp_filter, ecg_lp_filter, ecg_pl_filter
 from filters import acc_flat
 from filters import ACC_FS, ECG_FS, PPG_FS_125, PPG_FS_512
@@ -25,6 +25,7 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('--export_csv', help='Export to csv file', action='store_true')
     p.add_argument('--fft', help='Apply FFT cutoff', action='store_true')
+    p.add_argument('--fft_bp', help='Apply FFT bandpass filter', action='store_true')
     p.add_argument('--plot_type', nargs=1, default=None, type=int, choices=[0, 5, 9, 12], help='0: Acc, 5: ECG, 9: PPG 125 Hz, 12: PPG 512 Hz)')
     p.add_argument('raw_data_file', nargs=1, help='Specify the raw data file')
     p.add_argument('annotation_file', nargs='?', help='Specify the annotation file')
@@ -42,6 +43,13 @@ def group_by_handler(x):
         x.subscribe(on_next=parse_raw_ppg125, on_completed=ppg125_data_handler)
     elif x.key == '12':
         x.subscribe(on_next=parse_raw_ppg512, on_completed=ppg512_data_handler)
+
+def bandpass_filter(data, fs, lowcut, highcut, order=3):
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = signal.butter(order, [low, high], btype='band')
+    return scipy.signal.filtfilt(b, a, data)
 
 def acc_data_handler():
     def output(x):
@@ -84,7 +92,9 @@ def ecg_data_handler():
                   .map(lambda x: np.array(x)) \
                   .subscribe(output)
 
-def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, fn_hp=ppg125_hp_filter, fn_lp=ppg125_lp_filter):
+def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, \
+                        fn_hp=ppg125_hp_filter, fn_lp=ppg125_lp_filter, \
+                        fn_bp=ppg125_bp_filter):
     def output(x):
         if args["export_csv"]:
             np.savetxt(args[arg_fname], x, delimiter=',')
@@ -100,6 +110,12 @@ def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, fn
                   .map(fn_hp) \
                   .map(fn_lp) \
                   .subscribe(output)
+    elif args["fft_bp"]:
+        Observable.just(ppg_data)             \
+                  .map(calc_ts)               \
+                  .map(lambda x: np.array(x)) \
+                  .map(fn_bp) \
+                  .subscribe(output)
     else:
         Observable.just(ppg_data)             \
                   .map(calc_ts)               \
@@ -108,7 +124,7 @@ def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, fn
 
 
 def ppg512_data_handler():
-    ppg125_data_handler("ppg512_csv", 12, PPG_FS_512, ppg512_hp_filter, ppg512_lp_filter)
+    ppg125_data_handler("ppg512_csv", 12, PPG_FS_512, ppg512_hp_filter, ppg512_lp_filter, ppg512_bp_filter)
 
 def annotation_handler():
     if args["plot_type"]:
