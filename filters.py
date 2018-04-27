@@ -10,31 +10,25 @@ PPG_FS_512 = 512 # don't skip any received data, ambient data has been skipped b
 LOW_PASS_CUTOFF = 35
 HIGH_PASS_CUTOFF = 0.5
 
-def power_line_noise_filter(data, fs):
-    f0 = 65.0
-    Q = 30.0
+def power_line_noise_filter(data, fs, f0=65.0, Q=30.0):
     w0 = f0 / (fs/2)
     b, a = signal.iirnotch(w0, Q)
     return scipy.signal.filtfilt(b, a, data)
 
-def butter_bandpass_filter(data, fs, lowcut, highcut, order=3):
+def butter_filter(data, fs, f1, f2=None, btype='band', order=3):
     nyq = 0.5 * fs
-    low = lowcut / nyq
-    high = highcut / nyq
-    b, a = scipy.signal.butter(order, [low, high], btype='band')
+    cutoff = [f1/nyq, f2/nyq] if btype == 'band' else f1/nyq
+    b, a = scipy.signal.butter(order, cutoff, btype=btype, analog=False)
     return scipy.signal.filtfilt(b, a, data)
 
-def high_pass_filter(data, fs, cutoff):
-    nyq = fs / 2.0
-    normalized_cutoff = cutoff / nyq
-    b, a = signal.butter(3, normalized_cutoff, btype="highpass", analog=False)
-    return scipy.signal.filtfilt(b, a, data)
+def butter_bandpass_filter(data, fs, lowcut, highcut, order=3):
+    return butter_filter(data, fs, lowcut, highcut, 'band', order)
 
-def low_pass_filter(data, fs, cutoff):
-    nyq = fs / 2.0
-    normalized_cutoff = cutoff / nyq
-    b, a = signal.butter(3, normalized_cutoff, btype="lowpass", analog=False)
-    return scipy.signal.filtfilt(b, a, data)
+def high_pass_filter(data, fs, cutoff, order=3):
+    return butter_filter(data, fs, cutoff, btype='highpass', order=order)
+
+def low_pass_filter(data, fs, cutoff, order=3):
+    return butter_filter(data, fs, cutoff, btype='lowpass', order=order)
 
 def ppg125_pl_filter(x):
     """ A map function to perform power line noise filter against ppg125 data
