@@ -30,6 +30,12 @@ def high_pass_filter(data, fs, cutoff, order=3):
 def low_pass_filter(data, fs, cutoff, order=3):
     return butter_filter(data, fs, cutoff, btype='lowpass', order=order)
 
+def acc_bp_filter(data, fs=100):
+    x = butter_bandpass_filter(data[:,1], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    y = butter_bandpass_filter(data[:,2], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    z = butter_bandpass_filter(data[:,1], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    return np.column_stack((data[:,0], x, y, z))
+
 def ppg125_pl_filter(x):
     """ A map function to perform power line noise filter against ppg125 data
     Input: numpy array

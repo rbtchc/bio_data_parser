@@ -13,6 +13,7 @@ from parser import calc_ts
 from parser import parse_raw_acc, acc_data
 from parser import parse_raw_ecg, ecg_data
 from parser import parse_raw_ppg125, parse_raw_ppg512, ppg_data
+from filters import acc_bp_filter
 from filters import ppg125_hp_filter, ppg125_lp_filter, ppg125_pl_filter, ppg125_bp_filter
 from filters import ppg512_hp_filter, ppg512_lp_filter, ppg512_pl_filter, ppg512_bp_filter
 from filters import ecg_hp_filter, ecg_lp_filter, ecg_pl_filter
@@ -63,11 +64,19 @@ def acc_data_handler():
             plot_freq_domain(ax2, mag[:,1], ACC_FS)
 
     # pipeline
-    Observable.just(acc_data)             \
-              .map(calc_ts)               \
-              .map(acc_flat)              \
-              .map(lambda x: np.array(x)) \
-              .subscribe(output)
+    if args["fft_bp"] or args["fft"]:
+        Observable.just(acc_data)             \
+                  .map(calc_ts)               \
+                  .map(acc_flat)              \
+                  .map(lambda x: np.array(x)) \
+                  .map(acc_bp_filter) \
+                  .subscribe(output)
+    else:
+        Observable.just(acc_data)             \
+                  .map(calc_ts)               \
+                  .map(acc_flat)              \
+                  .map(lambda x: np.array(x)) \
+                  .subscribe(output)
 
 def ecg_data_handler():
     def output(x):
