@@ -33,7 +33,7 @@ def low_pass_filter(data, fs, cutoff, order=3):
 def acc_bp_filter(data, fs=100):
     x = butter_bandpass_filter(data[:,1], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
     y = butter_bandpass_filter(data[:,2], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
-    z = butter_bandpass_filter(data[:,1], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    z = butter_bandpass_filter(data[:,3], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
     return np.column_stack((data[:,0], x, y, z))
 
 def ppg125_pl_filter(x):
