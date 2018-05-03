@@ -126,43 +126,42 @@ def annotation_handler():
     if args["plot_type"]:
         plot_annotation(ax1, annotation_data)
 
-######################################################################
+if __name__ == "__main__":
+    # parse arguments
+    args = parse_args()
 
-# parse arguments
-args = parse_args()
+    print args
 
-print args
+    ax1 = ax2 = None
+    if args["plot_type"]:
+        _, (ax1, ax2) = plot.subplots(2, 1)
 
-ax1 = ax2 = None
-if args["plot_type"]:
-    _, (ax1, ax2) = plot.subplots(2, 1)
+    # prepare something for later use
+    input_file = os.path.basename(args["raw_data_file"][0])
+    basename = os.path.splitext(input_file)[0]
+    args["acc_csv"] = basename + "_acc.csv"
+    args["ecg_csv"] = basename + "_ecg.csv"
+    args["ppg125_csv"] = basename + "_ppg125.csv"
+    args["ppg512_csv"] = basename + "_ppg512.csv"
 
-# prepare something for later use
-input_file = os.path.basename(args["raw_data_file"][0])
-basename = os.path.splitext(input_file)[0]
-args["acc_csv"] = basename + "_acc.csv"
-args["ecg_csv"] = basename + "_ecg.csv"
-args["ppg125_csv"] = basename + "_ppg125.csv"
-args["ppg512_csv"] = basename + "_ppg512.csv"
+    # Ideally, observables can be executed in different threads.
+    # However, it's difficult becuase matplotlib can only be executed in
+    # the main thread and pyplot.show() only can be executed once.
+    # So, we only take advantage of reactivex to build the data pipeline by
+    # observable::map().
 
-# Ideally, observables can be executed in different threads.
-# However, it's difficult becuase matplotlib can only be executed in
-# the main thread and pyplot.show() only can be executed once.
-# So, we only take advantage of reactivex to build the data pipeline by
-# observable::map().
+    if args["annotation_file"]:
+        a = open(args["annotation_file"])
+        alines = a.read().split('\n')
+        Observable.from_(alines)                            \
+                  .filter(lambda x: True if x else False)   \
+                  .subscribe(on_next=parse_annotation, on_completed=annotation_handler)
 
-if args["annotation_file"]:
-    a = open(args["annotation_file"])
-    alines = a.read().split('\n')
-    Observable.from_(alines)                            \
-              .filter(lambda x: True if x else False)   \
-              .subscribe(on_next=parse_annotation, on_completed=annotation_handler)
+    f = open(args["raw_data_file"][0])
+    lines = f.read().split('\n')
+    Observable.from_(lines)                  \
+              .group_by(group_key_generator) \
+              .subscribe(group_by_handler)
 
-f = open(args["raw_data_file"][0])
-lines = f.read().split('\n')
-Observable.from_(lines)                  \
-          .group_by(group_key_generator) \
-          .subscribe(group_by_handler)
-
-if args["plot_type"]:
-    plot.show()
+    if args["plot_type"]:
+        plot.show()
