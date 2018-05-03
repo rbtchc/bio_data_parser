@@ -31,46 +31,37 @@ def low_pass_filter(data, fs, cutoff, order=3):
     return butter_filter(data, fs, cutoff, btype='lowpass', order=order)
 
 def acc_bp_filter(data, fs=100):
-    x = butter_bandpass_filter(data[:,1], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
-    y = butter_bandpass_filter(data[:,2], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
-    z = butter_bandpass_filter(data[:,3], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
-    return np.column_stack((data[:,0], x, y, z))
+    for i in range(1,4):
+        data[:,i] = butter_bandpass_filter(data[:,i], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    return data
 
 def ppg125_pl_filter(x):
     """ A map function to perform power line noise filter against ppg125 data
     Input: numpy array
     Output: numpy array
     """
-    filtered = x[:,1]
-    filtered = power_line_noise_filter(filtered, PPG_FS_125)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = power_line_noise_filter(x[:,1], PPG_FS_125)
+    return x
 
 def ppg125_hp_filter(x):
     """ A map function to perform high pass filter against ppg125 data
     Input: numpy array
     Output: numpy array
     """
-    filtered = x[:,1]
-    filtered = high_pass_filter(filtered, PPG_FS_125, HIGH_PASS_CUTOFF)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = high_pass_filter(x[:,1], PPG_FS_125, HIGH_PASS_CUTOFF)
+    return x
 
 def ppg125_lp_filter(x):
     """ A map function to perform low pass filter against ppg125 data
     Input: numpy array
     Output: numpy array
     """
-    filtered = x[:,1]
-    filtered = low_pass_filter(filtered, PPG_FS_125, LOW_PASS_CUTOFF)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = high_pass_filter(x[:,1], PPG_FS_125, LOW_PASS_CUTOFF)
+    return x
 
 def ppg125_bp_filter(x, fs=PPG_FS_125):
-    filtered = x[:,1]
-    filtered = butter_bandpass_filter(filtered, fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = butter_bandpass_filter(x[:,1], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    return x
 
 def ppg512_bp_filter(x):
     return ppg125_bp_filter(x, PPG_FS_512)
@@ -80,64 +71,52 @@ def ppg512_pl_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    filtered = x[:,1]
-    filtered = power_line_noise_filter(filtered, PPG_FS_512)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = power_line_noise_filter(x[:,1], PPG_FS_512)
+    return x
 
 def ppg512_hp_filter(x):
     """ A map function to perform high pass filter against ppg512 data
     Input: numpy array
     Output: numpy array
     """
-    filtered = x[:,1]
-    filtered = high_pass_filter(filtered, PPG_FS_512, HIGH_PASS_CUTOFF)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = high_pass_filter(x[:,1], PPG_FS_512, HIGH_PASS_CUTOFF)
+    return x
 
 def ppg512_lp_filter(x):
     """ A map function to perform low pass filter against ppg512 data
     Input: numpy array
     Output: numpy array
     """
-    filtered = x[:,1]
-    filtered = low_pass_filter(filtered, PPG_FS_512, LOW_PASS_CUTOFF)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = low_pass_filter(x[:,1], PPG_FS_512, LOW_PASS_CUTOFF)
+    return x
 
 def ecg_pl_filter(x):
     """ A map function to perform power line noise filter against ecg data
     Input: numpy array
     Output: numpy array
     """
-    filtered = x[:,1]
-    filtered = power_line_noise_filter(filtered, ECG_FS)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = power_line_noise_filter(x[:,1], ECG_FS)
+    return x
 
 def ecg_hp_filter(x):
     """ A map function to perform high pass filter against ecg data
     Input: numpy array
     Output: numpy array
     """
-    filtered = x[:,1]
-    filtered = high_pass_filter(filtered, PPG_FS_512, HIGH_PASS_CUTOFF)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = high_pass_filter(x[:,1], ECG_FS_512, HIGH_PASS_CUTOFF)
+    return x
 
 def ecg_lp_filter(x):
     """ A map function to perform low pass filter against ecg data
     Input: numpy array
     Output: numpy array
     """
-    filtered = x[:,1]
-    filtered = low_pass_filter(filtered, PPG_FS_512, LOW_PASS_CUTOFF)
-    filtered = np.column_stack((x[:,0], filtered))
-    return filtered
+    x[:,1] = low_pass_filter(x[:,1], ECG_FS_512, LOW_PASS_CUTOFF)
+    return x
 
 def acc_mag_filter(x):
     filtered = x[:,1]
-    print filtered
+    # ??
     return x
 
 def acc_flat(x):
@@ -145,7 +124,4 @@ def acc_flat(x):
     Input: list, e.g. [(timestamp, (x, y, z))]
     Output: list, e.g. [[timestamp, x, y, z]]
     """
-    y = []
-    for i in x:
-        y.append([i[0], i[1][0], i[1][1], i[1][2]])
-    return y
+    return [[i[0], i[1][0], i[1][1], i[1][2]] for i in x]
