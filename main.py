@@ -1,24 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 import os
 import argparse
 import rx
 import numpy as np
-import time
 import matplotlib.pyplot as plot
 from rx import Observable
+
 from parser import calc_ts
 from parser import parse_raw_acc, acc_data
 from parser import parse_raw_ecg, ecg_data
-from parser import parse_raw_ppg125, parse_raw_ppg512, ppg125_data, ppg512_data
+from parser import parse_raw_ppg125, ppg125_data
+from parser import parse_raw_ppg512, ppg512_data
+
 from filters import acc_bp_filter
 from filters import ppg125_pl_filter, ppg125_bp_filter
 from filters import ppg512_pl_filter, ppg512_bp_filter
 from filters import ecg_hp_filter, ecg_lp_filter, ecg_pl_filter
 from filters import acc_flat
 from filters import ACC_FS, ECG_FS, PPG_FS_125, PPG_FS_512
+
 from plots import plot_time_domain, plot_freq_domain, plot_annotation
 from annotation import parse_annotation, annotation_data
 
