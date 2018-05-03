@@ -103,7 +103,7 @@ def ecg_hp_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = high_pass_filter(x[:,1], ECG_FS_512, HIGH_PASS_CUTOFF)
+    x[:,1] = high_pass_filter(x[:,1], ECG_FS, HIGH_PASS_CUTOFF)
     return x
 
 def ecg_lp_filter(x):
@@ -111,7 +111,7 @@ def ecg_lp_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = low_pass_filter(x[:,1], ECG_FS_512, LOW_PASS_CUTOFF)
+    x[:,1] = low_pass_filter(x[:,1], ECG_FS, LOW_PASS_CUTOFF)
     return x
 
 def acc_mag_filter(x):
