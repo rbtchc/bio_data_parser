@@ -40,41 +40,24 @@ def parse_raw_acc(x):
     for i in [2, 6, 10]:
         acc_data.append((ts_ms, tuple(nums[i:i+3])))
 
-def parse_raw_ppg125(x):
-    """ Parse one line of raw ppg data and add it to ppg data """
+def parse_raw_hr_signals(x, index, fn):
+    """ Parse one line of raw ppg/ecg data and add it to ppg/ecg data """
     items = x.split(',')
-    # convert ppg to mv
-    strs = items[2:13:2]
-    nums = map(int, strs)
-    nums = map(convert_ppg_to_mv, nums)
     # convert ts to ms
     ts_ms = int(items[15]) * MSEC_PER_SEC
-    for n in nums:
-        ppg_data.append((ts_ms, n))
+    # convert signals to mv
+    for n in index:
+        ppg_data.append((ts_ms, fn(int(items[n]))))
+
+def parse_raw_ppg125(x):
+    parse_raw_hr_signals(x, range(2, 13, 2), convert_ppg_to_mv)
 
 def parse_raw_ppg512(x):
-    """ Parse one line of raw ppg data and add it to ppg data """
-    items = x.split(',')
-    # convert ppg to mv
-    strs = items[2:14]
-    nums = map(int, strs)
-    nums = map(convert_ppg_to_mv, nums)
-    # convert ts to ms
-    ts_ms = int(items[15]) * MSEC_PER_SEC
-    for n in nums:
-        ppg_data.append((ts_ms, n))
+    parse_raw_hr_signals(x, range(2, 14), convert_ppg_to_mv)
 
 def parse_raw_ecg(x):
     """ Parse one line of raw ecg data and add it to ecg data """
-    items = x.split(',')
-    # convert ppg to mv
-    strs = items[2:13]
-    nums = map(int, strs)
-    nums = map(convert_ecg_to_mv, nums)
-    # convert ts to ms
-    ts_ms = int(items[15]) * MSEC_PER_SEC
-    for n in nums:
-        ecg_data.append((ts_ms, n))
+    parse_raw_hr_signals(x, range(2,13), convert_ecg_to_mv)
 
 def calc_ts(x):
     base_ms = 0
