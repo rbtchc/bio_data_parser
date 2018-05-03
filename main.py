@@ -31,26 +31,6 @@ def parse_args():
     p.add_argument('annotation_file', nargs='?', help='Specify the annotation file')
     return vars(p.parse_args())
 
-def group_key_generator(x):
-    return x.split(',')[0]
-
-def group_by_handler(x):
-    if x.key == '0':
-        x.subscribe(on_next=parse_raw_acc, on_completed=acc_data_handler)
-    elif x.key == '5':
-        x.subscribe(on_next=parse_raw_ecg, on_completed=ecg_data_handler)
-    elif x.key == '9':
-        x.subscribe(on_next=parse_raw_ppg125, on_completed=ppg125_data_handler)
-    elif x.key == '12':
-        x.subscribe(on_next=parse_raw_ppg512, on_completed=ppg512_data_handler)
-
-def bandpass_filter(data, fs, lowcut, highcut, order=3):
-    nyq = 0.5 * fs
-    low = lowcut / nyq
-    high = highcut / nyq
-    b, a = signal.butter(order, [low, high], btype='band')
-    return scipy.signal.filtfilt(b, a, data)
-
 def acc_data_handler():
     def output(x):
         if args["export_csv"]:
@@ -126,12 +106,25 @@ def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, \
 def ppg512_data_handler():
     ppg125_data_handler("ppg512_csv", 12, PPG_FS_512, ppg512_bp_filter, ppg512_data)
 
+def group_key_generator(x):
+    return x.split(',')[0]
+
+_group_by_handlers = {
+        '0':  {"on_next": parse_raw_acc,    "on_completed": acc_data_handler},
+        '5':  {"on_next": parse_raw_ecg,    "on_completed": ecg_data_handler},
+        '9':  {"on_next": parse_raw_ppg125, "on_completed": ppg125_data_handler},
+        '12': {"on_next": parse_raw_ppg512, "on_completed": ppg512_data_handler}
+        }
+
+def group_by_handler(x):
+    # silently drop unknow lines
+    if x.key not in _group_by_handlers.keys():
+        return
+    x.subscribe(**_group_by_handlers[x.key])
+
 def annotation_handler():
     if args["plot_type"]:
         plot_annotation(ax1, annotation_data)
-
-def verbose(x):
-    print x
 
 ######################################################################
 
