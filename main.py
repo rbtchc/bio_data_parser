@@ -12,7 +12,7 @@ from rx import Observable
 from parser import calc_ts
 from parser import parse_raw_acc, acc_data
 from parser import parse_raw_ecg, ecg_data
-from parser import parse_raw_ppg125, parse_raw_ppg512, ppg_data
+from parser import parse_raw_ppg125, parse_raw_ppg512, ppg125_data, ppg512_data
 from filters import acc_bp_filter
 from filters import ppg125_pl_filter, ppg125_bp_filter
 from filters import ppg512_pl_filter, ppg512_bp_filter
@@ -101,7 +101,7 @@ def ecg_data_handler():
                   .subscribe(output)
 
 def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, \
-                        fn_bp=ppg125_bp_filter):
+                        fn_bp=ppg125_bp_filter, data=ppg125_data):
     def output(x):
         if args["export_csv"]:
             np.savetxt(args[arg_fname], x, delimiter=',')
@@ -111,20 +111,20 @@ def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, \
 
     # pipeline
     if args["fft"]:
-        Observable.just(ppg_data)             \
-                  .map(calc_ts)               \
+        Observable.just(data) \
+                  .map(calc_ts) \
                   .map(lambda x: np.array(x)) \
                   .map(fn_bp) \
                   .subscribe(output)
     else:
-        Observable.just(ppg_data)             \
-                  .map(calc_ts)               \
+        Observable.just(data) \
+                  .map(calc_ts) \
                   .map(lambda x: np.array(x)) \
                   .subscribe(output)
 
 
 def ppg512_data_handler():
-    ppg125_data_handler("ppg512_csv", 12, PPG_FS_512, ppg512_bp_filter)
+    ppg125_data_handler("ppg512_csv", 12, PPG_FS_512, ppg512_bp_filter, ppg512_data)
 
 def annotation_handler():
     if args["plot_type"]:

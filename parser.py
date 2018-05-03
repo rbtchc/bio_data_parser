@@ -7,8 +7,9 @@ TYPE_PPG512=12
 MSEC_PER_SEC = 1000
 
 acc_data = []
-ppg_data = []
 ecg_data = []
+ppg125_data = []
+ppg512_data = []
 
 def convert_ppg_to_mv(v):
     if v >= 4194304:
@@ -40,24 +41,24 @@ def parse_raw_acc(x):
     for i in [2, 6, 10]:
         acc_data.append((ts_ms, tuple(nums[i:i+3])))
 
-def parse_raw_hr_signals(x, index, fn):
+def parse_raw_hr_signals(x, index, fn, data):
     """ Parse one line of raw ppg/ecg data and add it to ppg/ecg data """
     items = x.split(',')
     # convert ts to ms
     ts_ms = int(items[15]) * MSEC_PER_SEC
     # convert signals to mv
     for n in index:
-        ppg_data.append((ts_ms, fn(int(items[n]))))
+        data.append((ts_ms, fn(int(items[n]))))
 
 def parse_raw_ppg125(x):
-    parse_raw_hr_signals(x, range(2, 13, 2), convert_ppg_to_mv)
+    parse_raw_hr_signals(x, range(2, 13, 2), convert_ppg_to_mv, ppg125_data)
 
 def parse_raw_ppg512(x):
-    parse_raw_hr_signals(x, range(2, 14), convert_ppg_to_mv)
+    parse_raw_hr_signals(x, range(2, 14), convert_ppg_to_mv, ppg512_data)
 
 def parse_raw_ecg(x):
     """ Parse one line of raw ecg data and add it to ecg data """
-    parse_raw_hr_signals(x, range(2,13), convert_ecg_to_mv)
+    parse_raw_hr_signals(x, range(2,13), convert_ecg_to_mv, ecg_data)
 
 def calc_ts(x):
     base_ms = 0
