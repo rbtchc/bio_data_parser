@@ -37,9 +37,8 @@ def parse_raw_acc(x):
     items = x.split(',')
     nums = map(int, items)
     ts_ms = nums[15] * MSEC_PER_SEC
-    acc_data.append((ts_ms, (nums[2], nums[3], nums[4])))
-    acc_data.append((ts_ms, (nums[6], nums[7], nums[8])))
-    acc_data.append((ts_ms, (nums[10], nums[11], nums[12])))
+    for i in [2, 6, 10]:
+        acc_data.append((ts_ms, tuple(nums[i:i+3])))
 
 def parse_raw_ppg125(x):
     """ Parse one line of raw ppg data and add it to ppg data """
