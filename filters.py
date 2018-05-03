@@ -7,7 +7,7 @@ ECG_FS = 512
 PPG_FS_125 = 125 # need to skip ambient light data 
 PPG_FS_512 = 512 # don't skip any received data, ambient data has been skipped by the watch
 
-LOW_PASS_CUTOFF = 35
+LOW_PASS_CUTOFF = 5
 HIGH_PASS_CUTOFF = 0.5
 
 def power_line_noise_filter(data, fs, f0=65.0, Q=30.0):
