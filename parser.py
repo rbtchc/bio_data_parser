@@ -12,13 +12,13 @@ ppg125_data = []
 ppg512_data = []
 
 def convert_ppg_to_mv(v):
-    if v >= 4194304:
-        v = v - 8388608
+    if v >= (1<<22):
+        v = v - (1<<23)
     return (v * 3.2 * 1000) / 65536
 
 def convert_ecg_to_mv(v):
-    if v >= 4194304:
-        v = v - 8388608
+    if v >= (1<<22):
+        v = v - (1<<23)
     return (v * 1000) / (6 * 2097152)
 
 def is_ecg(t):
