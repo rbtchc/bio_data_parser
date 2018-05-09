@@ -114,6 +114,10 @@ def ecg_lp_filter(x):
     x[:,1] = low_pass_filter(x[:,1], ECG_FS, LOW_PASS_CUTOFF)
     return x
 
+def ecg_bp_filter(x, fs=ECG_FS):
+    x[:,1] = butter_bandpass_filter(x[:,1], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    return x
+
 def acc_mag_filter(x):
     filtered = x[:,1]
     # ??

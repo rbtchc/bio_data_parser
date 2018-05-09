@@ -17,7 +17,7 @@ from parser import parse_raw_ppg512, ppg512_data
 from filters import acc_bp_filter
 from filters import ppg125_pl_filter, ppg125_bp_filter
 from filters import ppg512_pl_filter, ppg512_bp_filter
-from filters import ecg_hp_filter, ecg_lp_filter, ecg_pl_filter
+from filters import ecg_bp_filter, ecg_pl_filter
 from filters import acc_flat
 from filters import ACC_FS, ECG_FS, PPG_FS_125, PPG_FS_512
 
@@ -73,8 +73,7 @@ def ecg_data_handler():
                   .map(calc_ts)               \
                   .map(lambda x: np.array(x)) \
                   .map(ecg_pl_filter) \
-                  .map(ecg_hp_filter) \
-                  .map(ecg_lp_filter) \
+                  .map(ecg_bp_filter) \
                   .subscribe(output)
     else:
         Observable.just(ecg_data)             \
