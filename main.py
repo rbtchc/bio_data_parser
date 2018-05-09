@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plot
 from rx import Observable
 
-from parser import calc_ts
+from parser import calc_ts, calc_ts_seq, ppg125_reseq, ppg512_reseq, ecg_reseq
 from parser import parse_raw_acc, acc_data
 from parser import parse_raw_ecg, ecg_data
 from parser import parse_raw_ppg125, ppg125_data
@@ -69,20 +69,22 @@ def ecg_data_handler():
 
     # pipeline
     if args["fft"]:
-        Observable.just(ecg_data)             \
-                  .map(calc_ts)               \
+        Observable.just(ecg_data) \
+                  .map(calc_ts_seq) \
+                  .map(ecg_reseq) \
                   .map(lambda x: np.array(x)) \
                   .map(ecg_pl_filter) \
                   .map(ecg_bp_filter) \
                   .subscribe(output)
     else:
-        Observable.just(ecg_data)             \
-                  .map(calc_ts)               \
+        Observable.just(ecg_data) \
+                  .map(calc_ts_seq) \
+                  .map(ecg_reseq) \
                   .map(lambda x: np.array(x)) \
                   .subscribe(output)
 
 def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, \
-                        fn_bp=ppg125_bp_filter, data=ppg125_data):
+                        fn_bp=ppg125_bp_filter, data=ppg125_data, fn_reseq=ppg125_reseq):
     def output(x):
         if args["export_csv"]:
             np.savetxt(args[arg_fname], x, delimiter=',')
@@ -93,19 +95,20 @@ def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, \
     # pipeline
     if args["fft"]:
         Observable.just(data) \
-                  .map(calc_ts) \
+                  .map(calc_ts_seq) \
+                  .map(fn_reseq) \
                   .map(lambda x: np.array(x)) \
                   .map(fn_bp) \
                   .subscribe(output)
     else:
         Observable.just(data) \
-                  .map(calc_ts) \
+                  .map(calc_ts_seq) \
+                  .map(fn_reseq) \
                   .map(lambda x: np.array(x)) \
                   .subscribe(output)
 
-
 def ppg512_data_handler():
-    ppg125_data_handler("ppg512_csv", 12, PPG_FS_512, ppg512_bp_filter, ppg512_data)
+    ppg125_data_handler("ppg512_csv", 12, PPG_FS_512, ppg512_bp_filter, ppg512_data, fn_reseq=ppg512_reseq)
 
 def group_key_generator(x):
     return x.split(',')[0]

@@ -40,7 +40,7 @@ def ppg125_pl_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = power_line_noise_filter(x[:,1], PPG_FS_125)
+    x[:,2] = power_line_noise_filter(x[:,2], PPG_FS_125)
     return x
 
 def ppg125_hp_filter(x):
@@ -48,7 +48,7 @@ def ppg125_hp_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = high_pass_filter(x[:,1], PPG_FS_125, HIGH_PASS_CUTOFF)
+    x[:,2] = high_pass_filter(x[:,2], PPG_FS_125, HIGH_PASS_CUTOFF)
     return x
 
 def ppg125_lp_filter(x):
@@ -56,11 +56,11 @@ def ppg125_lp_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = high_pass_filter(x[:,1], PPG_FS_125, LOW_PASS_CUTOFF)
+    x[:,2] = high_pass_filter(x[:,2], PPG_FS_125, LOW_PASS_CUTOFF)
     return x
 
 def ppg125_bp_filter(x, fs=PPG_FS_125):
-    x[:,1] = butter_bandpass_filter(x[:,1], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    x[:,2] = butter_bandpass_filter(x[:,2], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
     return x
 
 def ppg512_bp_filter(x):
@@ -71,7 +71,7 @@ def ppg512_pl_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = power_line_noise_filter(x[:,1], PPG_FS_512)
+    x[:,2] = power_line_noise_filter(x[:,2], PPG_FS_512)
     return x
 
 def ppg512_hp_filter(x):
@@ -79,7 +79,7 @@ def ppg512_hp_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = high_pass_filter(x[:,1], PPG_FS_512, HIGH_PASS_CUTOFF)
+    x[:,2] = high_pass_filter(x[:,2], PPG_FS_512, HIGH_PASS_CUTOFF)
     return x
 
 def ppg512_lp_filter(x):
@@ -87,7 +87,7 @@ def ppg512_lp_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = low_pass_filter(x[:,1], PPG_FS_512, LOW_PASS_CUTOFF)
+    x[:,2] = low_pass_filter(x[:,2], PPG_FS_512, LOW_PASS_CUTOFF)
     return x
 
 def ecg_pl_filter(x):
@@ -95,7 +95,7 @@ def ecg_pl_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = power_line_noise_filter(x[:,1], ECG_FS)
+    x[:,2] = power_line_noise_filter(x[:,2], ECG_FS)
     return x
 
 def ecg_hp_filter(x):
@@ -103,7 +103,7 @@ def ecg_hp_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = high_pass_filter(x[:,1], ECG_FS, HIGH_PASS_CUTOFF)
+    x[:,2] = high_pass_filter(x[:,2], ECG_FS, HIGH_PASS_CUTOFF)
     return x
 
 def ecg_lp_filter(x):
@@ -111,11 +111,11 @@ def ecg_lp_filter(x):
     Input: numpy array
     Output: numpy array
     """
-    x[:,1] = low_pass_filter(x[:,1], ECG_FS, LOW_PASS_CUTOFF)
+    x[:,2] = low_pass_filter(x[:,2], ECG_FS, LOW_PASS_CUTOFF)
     return x
 
 def ecg_bp_filter(x, fs=ECG_FS):
-    x[:,1] = butter_bandpass_filter(x[:,1], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
+    x[:,2] = butter_bandpass_filter(x[:,2], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
     return x
 
 def acc_mag_filter(x):
