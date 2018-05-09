@@ -38,8 +38,9 @@ def parse_raw_acc(x):
     items = x.split(',')
     nums = map(int, items)
     ts_ms = nums[15] * MSEC_PER_SEC
+    seq = nums[1]
     for i in [2, 6, 10]:
-        acc_data.append((ts_ms, tuple(nums[i:i+3])))
+        acc_data.append([ts_ms, seq] + nums[i:i+3])
 
 def parse_raw_hr_signals(x, index, fn, data):
     """ Parse one line of raw ppg/ecg data and add it to ppg/ecg data """
@@ -49,7 +50,7 @@ def parse_raw_hr_signals(x, index, fn, data):
     seq = int(items[1])
     # convert signals to mv
     for n in index:
-        data.append((ts_ms, seq, fn(int(items[n]))))
+        data.append([ts_ms, seq, fn(int(items[n]))])
 
 def parse_raw_ppg125(x):
     parse_raw_hr_signals(x, range(2, 13, 2), convert_ppg_to_mv, ppg125_data)
@@ -59,7 +60,7 @@ def parse_raw_ppg512(x):
 
 def parse_raw_ecg(x):
     """ Parse one line of raw ecg data and add it to ecg data """
-    parse_raw_hr_signals(x, range(2,14), convert_ecg_to_mv, ecg_data)
+    parse_raw_hr_signals(x, range(2, 14), convert_ecg_to_mv, ecg_data)
 
 def calc_ts(x):
     base_ms = 0
@@ -67,7 +68,6 @@ def calc_ts(x):
     buf = []
     for l in x:
         new_ms = l[0]
-        mv = l[1]
         if base_ms == 0:
             base_ms = new_ms
         elif base_ms != new_ms:
@@ -76,34 +76,14 @@ def calc_ts(x):
                 ts_ms = base_ms + (fraction * i)
                 if ts_ms >= new_ms:
                     print "Error: timestamp equal to or larger than new base timestamp"
-                data.append((ts_ms, buf[i]))
+                buf[i][0] = ts_ms
+                data.append(buf[i])
             base_ms = new_ms
-            buf[:] = []
-        buf.append(mv)
+            buf = []
+        buf.append(l)
     return data
 
-def calc_ts_seq(x):
-    base_ms = 0
-    data = []
-    buf = []
-    for l in x:
-        new_ms = l[0]
-        payload = l[1:]
-        if base_ms == 0:
-            base_ms = new_ms
-        elif base_ms != new_ms:
-            fraction = float(new_ms - base_ms) / len(buf)
-            for i in range(0, len(buf)):
-                ts_ms = base_ms + (fraction * i)
-                if ts_ms >= new_ms:
-                    print "Error: timestamp equal to or larger than new base timestamp"
-                data.append([ts_ms, buf[i][0], buf[i][1]])
-            base_ms = new_ms
-            buf[:] = []
-        buf.append(payload)
-    return data
-
-def re_sequence(x, new_seq, orig_seq, step):
+def reseq(x, new_seq, orig_seq, step):
     '''
     x: input data, column orderd as timestamp, sequence, MV
     new_seq: last new sequence number
@@ -121,17 +101,20 @@ def re_sequence(x, new_seq, orig_seq, step):
     return x, orig_seq, new_seq
 
 def ppg125_reseq(x):
-    x, ppg125_reseq.orig_seq, ppg125_reseq.new_seq = re_sequence(x, getattr(ppg125_reseq, 'orig_seq', None), getattr(ppg125_reseq, 'new_seq', None), 6)
+    x, ppg125_reseq.orig_seq, ppg125_reseq.new_seq = reseq(x, getattr(ppg125_reseq, 'orig_seq', None), getattr(ppg125_reseq, 'new_seq', None), 6)
     return x
 
 def ppg512_reseq(x):
-    x, ppg512_reseq.orig_seq, ppg512_reseq.new_seq = re_sequence(x, getattr(ppg512_reseq, 'orig_seq', None), getattr(ppg512_reseq, 'new_seq', None), 12)
+    x, ppg512_reseq.orig_seq, ppg512_reseq.new_seq = reseq(x, getattr(ppg512_reseq, 'orig_seq', None), getattr(ppg512_reseq, 'new_seq', None), 12)
     return x
 
 def ecg_reseq(x):
-    x, ecg_reseq.orig_seq, ecg_reseq.new_seq = re_sequence(x, getattr(ecg_reseq, 'orig_seq', None), getattr(ecg_reseq, 'new_seq', None), 12)
+    x, ecg_reseq.orig_seq, ecg_reseq.new_seq = reseq(x, getattr(ecg_reseq, 'orig_seq', None), getattr(ecg_reseq, 'new_seq', None), 12)
     return x
 
+def acc_reseq(x):
+    x, acc_reseq.orig_seq, acc_reseq.new_seq = reseq(x, getattr(acc_reseq, 'orig_seq', None), getattr(acc_reseq, 'new_seq', None), 3)
+    return x
 
 def parse_data(file_obj, signal_type):
     """

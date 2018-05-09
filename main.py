@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plot
 from rx import Observable
 
-from parser import calc_ts, calc_ts_seq, ppg125_reseq, ppg512_reseq, ecg_reseq
+from parser import calc_ts, ppg125_reseq, ppg512_reseq, ecg_reseq, acc_reseq
 from parser import parse_raw_acc, acc_data
 from parser import parse_raw_ecg, ecg_data
 from parser import parse_raw_ppg125, ppg125_data
@@ -47,15 +47,15 @@ def acc_data_handler():
     # pipeline
     if args["fft"]:
         Observable.just(acc_data)             \
-                  .map(calc_ts)               \
-                  .map(acc_flat)              \
+                  .map(calc_ts)           \
+                  .map(acc_reseq)           \
                   .map(lambda x: np.array(x)) \
                   .map(acc_bp_filter) \
                   .subscribe(output)
     else:
         Observable.just(acc_data)             \
                   .map(calc_ts)               \
-                  .map(acc_flat)              \
+                  .map(acc_reseq)           \
                   .map(lambda x: np.array(x)) \
                   .subscribe(output)
 
@@ -70,7 +70,7 @@ def ecg_data_handler():
     # pipeline
     if args["fft"]:
         Observable.just(ecg_data) \
-                  .map(calc_ts_seq) \
+                  .map(calc_ts) \
                   .map(ecg_reseq) \
                   .map(lambda x: np.array(x)) \
                   .map(ecg_pl_filter) \
@@ -78,7 +78,7 @@ def ecg_data_handler():
                   .subscribe(output)
     else:
         Observable.just(ecg_data) \
-                  .map(calc_ts_seq) \
+                  .map(calc_ts) \
                   .map(ecg_reseq) \
                   .map(lambda x: np.array(x)) \
                   .subscribe(output)
@@ -95,14 +95,14 @@ def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, \
     # pipeline
     if args["fft"]:
         Observable.just(data) \
-                  .map(calc_ts_seq) \
+                  .map(calc_ts) \
                   .map(fn_reseq) \
                   .map(lambda x: np.array(x)) \
                   .map(fn_bp) \
                   .subscribe(output)
     else:
         Observable.just(data) \
-                  .map(calc_ts_seq) \
+                  .map(calc_ts) \
                   .map(fn_reseq) \
                   .map(lambda x: np.array(x)) \
                   .subscribe(output)
