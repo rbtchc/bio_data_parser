@@ -31,7 +31,7 @@ def low_pass_filter(data, fs, cutoff, order=3):
     return butter_filter(data, fs, cutoff, btype='lowpass', order=order)
 
 def acc_bp_filter(data, fs=100):
-    for i in range(1,4):
+    for i in range(2,5):
         data[:,i] = butter_bandpass_filter(data[:,i], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
     return data
 
@@ -123,9 +123,3 @@ def acc_mag_filter(x):
     # ??
     return x
 
-def acc_flat(x):
-    """ A map function to simply the acc data format
-    Input: list, e.g. [(timestamp, (x, y, z))]
-    Output: list, e.g. [[timestamp, x, y, z]]
-    """
-    return [[i[0], i[1][0], i[1][1], i[1][2]] for i in x]

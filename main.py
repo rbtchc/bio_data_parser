@@ -14,11 +14,7 @@ from parser import parse_raw_ecg, ecg_data
 from parser import parse_raw_ppg125, ppg125_data
 from parser import parse_raw_ppg512, ppg512_data
 
-from filters import acc_bp_filter
-from filters import ppg125_pl_filter, ppg125_bp_filter
-from filters import ppg512_pl_filter, ppg512_bp_filter
-from filters import ecg_bp_filter, ecg_pl_filter
-from filters import acc_flat
+from filters import acc_bp_filter, ppg125_bp_filter, ppg512_bp_filter, ecg_bp_filter, ecg_pl_filter
 from filters import ACC_FS, ECG_FS, PPG_FS_125, PPG_FS_512
 
 from plots import plot_time_domain, plot_freq_domain, plot_annotation
@@ -28,87 +24,54 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('--export_csv', help='Export to csv file', action='store_true')
     p.add_argument('--fft', help='Apply FFT bandpass filter', action='store_true')
-    p.add_argument('--plot_type', nargs=1, default=None, type=int, choices=[0, 5, 9, 12], help='0: Acc, 5: ECG, 9: PPG 125 Hz, 12: PPG 512 Hz)')
+    p.add_argument('--plot_type', nargs=1, default=None, type=int, choices=[0, 5, 9, 12], \
+                   help='0: Acc, 5: ECG, 9: PPG 125 Hz, 12: PPG 512 Hz)')
     p.add_argument('raw_data_file', nargs=1, help='Specify the raw data file')
     p.add_argument('annotation_file', nargs='?', help='Specify the annotation file')
     return vars(p.parse_args())
 
-def acc_data_handler():
-    def output(x):
-        if args["export_csv"]:
-            np.savetxt(args["acc_csv"], x, delimiter=',')
-        if args["plot_type"] and args["plot_type"][0] == 0:
-            s = np.square(x[:,1:])
-            mag = np.sum(s, axis=1)
-            mag = np.column_stack((x[:,0], mag))
-            plot_time_domain(ax1, mag)
-            plot_freq_domain(ax2, mag[:,1], ACC_FS)
+def default_plot_fn(ax1, ax2, x, freq):
+    plot_time_domain(ax1, x[:,1:])
+    plot_freq_domain(ax2, x[:,2], freq)
 
-    # pipeline
-    if args["fft"]:
-        Observable.just(acc_data)             \
-                  .map(calc_ts)           \
-                  .map(acc_reseq)           \
-                  .map(lambda x: np.array(x)) \
-                  .map(acc_bp_filter) \
-                  .subscribe(output)
-    else:
-        Observable.just(acc_data)             \
-                  .map(calc_ts)               \
-                  .map(acc_reseq)           \
-                  .map(lambda x: np.array(x)) \
-                  .subscribe(output)
+def acc_plot_fn(ax1, ax2, x, freq):
+    s = np.square(x[:,2:])
+    mag = np.sum(s, axis=1)
+    mag = np.column_stack((x[:,1], mag))
 
-def ecg_data_handler():
-    def output(x):
-        if args["export_csv"]:
-            np.savetxt(args["ecg_csv"], x, delimiter=',')
-        if args["plot_type"] and args["plot_type"][0] == 5:
-            plot_time_domain(ax1, x)
-            plot_freq_domain(ax2, x[:,1], ECG_FS)
+    plot_time_domain(ax1, mag)
+    plot_freq_domain(ax2, mag[:,1], freq)
 
-    # pipeline
-    if args["fft"]:
-        Observable.just(ecg_data) \
-                  .map(calc_ts) \
-                  .map(ecg_reseq) \
-                  .map(lambda x: np.array(x)) \
-                  .map(ecg_pl_filter) \
-                  .map(ecg_bp_filter) \
-                  .subscribe(output)
-    else:
-        Observable.just(ecg_data) \
-                  .map(calc_ts) \
-                  .map(ecg_reseq) \
-                  .map(lambda x: np.array(x)) \
-                  .subscribe(output)
-
-def ppg125_data_handler(arg_fname="ppg125_csv", data_type=9, freq=PPG_FS_125, \
-                        fn_bp=ppg125_bp_filter, data=ppg125_data, fn_reseq=ppg125_reseq):
+def data_handler(arg_fname, data_type, freq, fn_filters, data, fn_reseq, plot_fn=default_plot_fn):
     def output(x):
         if args["export_csv"]:
             np.savetxt(args[arg_fname], x, delimiter=',')
-        if args["plot_type"] and args["plot_type"][0] == data_type:
-            plot_time_domain(ax1, x)
-            plot_freq_domain(ax2, x[:,1], freq)
 
-    # pipeline
+        if args["plot_type"] and args["plot_type"][0] == data_type:
+            plot_fn(ax1, ax2, x, freq)
+
+    x = Observable.just(data) \
+                  .map(calc_ts) \
+                  .map(fn_reseq) \
+                  .map(lambda x: np.array(x))
+
     if args["fft"]:
-        Observable.just(data) \
-                  .map(calc_ts) \
-                  .map(fn_reseq) \
-                  .map(lambda x: np.array(x)) \
-                  .map(fn_bp) \
-                  .subscribe(output)
-    else:
-        Observable.just(data) \
-                  .map(calc_ts) \
-                  .map(fn_reseq) \
-                  .map(lambda x: np.array(x)) \
-                  .subscribe(output)
+        for f in fn_filters:
+            x = x.map(f)
+
+    x.subscribe(output)
+
+def acc_data_handler():
+    data_handler("acc_csv", 0, ACC_FS, [acc_bp_filter], acc_data, acc_reseq, acc_plot_fn)
+
+def ecg_data_handler():
+    data_handler("ecg_csv", 5, ECG_FS, [ecg_pl_filter, ecg_bp_filter], ecg_data, ecg_reseq)
+
+def ppg125_data_handler():
+    data_handler("ppg125_csv", 9, PPG_FS_125, [ppg125_bp_filter], ppg125_data, ppg125_reseq)
 
 def ppg512_data_handler():
-    ppg125_data_handler("ppg512_csv", 12, PPG_FS_512, ppg512_bp_filter, ppg512_data, fn_reseq=ppg512_reseq)
+    data_handler("ppg512_csv", 12, PPG_FS_512, [ppg512_bp_filter], ppg512_data, ppg512_reseq)
 
 def group_key_generator(x):
     return x.split(',')[0]
@@ -133,20 +96,15 @@ def annotation_handler():
 if __name__ == "__main__":
     # parse arguments
     args = parse_args()
-
     print args
 
     ax1 = ax2 = None
-    if args["plot_type"]:
-        _, (ax1, ax2) = plot.subplots(2, 1)
+    if args["plot_type"]: _, (ax1, ax2) = plot.subplots(2, 1)
 
     # prepare something for later use
-    input_file = os.path.basename(args["raw_data_file"][0])
-    basename = os.path.splitext(input_file)[0]
-    args["acc_csv"] = basename + "_acc.csv"
-    args["ecg_csv"] = basename + "_ecg.csv"
-    args["ppg125_csv"] = basename + "_ppg125.csv"
-    args["ppg512_csv"] = basename + "_ppg512.csv"
+    basename = os.path.splitext(os.path.basename(args["raw_data_file"][0]))[0]
+    for n in ["acc", "ecg", "ppg125", "ppg512"]:
+        args[n+"_csv"] = basename + "_" + n + ".csv"
 
     # Ideally, observables can be executed in different threads.
     # However, it's difficult becuase matplotlib can only be executed in
@@ -155,17 +113,15 @@ if __name__ == "__main__":
     # observable::map().
 
     if args["annotation_file"]:
-        a = open(args["annotation_file"])
-        alines = a.read().split('\n')
-        Observable.from_(alines)                            \
-                  .filter(lambda x: True if x else False)   \
+        Observable.from_(open(args["annotation_file"])) \
+                  .map(lambda x: x.strip()) \
+                  .filter(lambda x: True if x else False) \
                   .subscribe(on_next=parse_annotation, on_completed=annotation_handler)
 
-    f = open(args["raw_data_file"][0])
-    lines = f.read().split('\n')
-    Observable.from_(lines)                  \
+    Observable.from_(open(args["raw_data_file"][0])) \
+              .map(lambda x: x.strip()) \
               .group_by(group_key_generator) \
               .subscribe(group_by_handler)
 
-    if args["plot_type"]:
-        plot.show()
+    if args["plot_type"]: plot.show()
+
