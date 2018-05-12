@@ -1,24 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import argparse
-import rx
-import numpy as np
 import matplotlib.pyplot as plot
-from rx import Observable
+import numpy as np
+import os
+import rx
 
+from annotation import parse_annotation, annotation_data
+from filters import acc_bp_filter, ppg125_bp_filter, ppg512_bp_filter, ecg_bp_filter, ecg_pl_filter
+from filters import ACC_FS, ECG_FS, PPG_FS_125, PPG_FS_512
 from parser import calc_ts, ppg125_reseq, ppg512_reseq, ecg_reseq, acc_reseq
 from parser import parse_raw_acc, acc_data
 from parser import parse_raw_ecg, ecg_data
 from parser import parse_raw_ppg125, ppg125_data
 from parser import parse_raw_ppg512, ppg512_data
-
-from filters import acc_bp_filter, ppg125_bp_filter, ppg512_bp_filter, ecg_bp_filter, ecg_pl_filter
-from filters import ACC_FS, ECG_FS, PPG_FS_125, PPG_FS_512
-
 from plots import plot_time_domain, plot_freq_domain, plot_annotation
-from annotation import parse_annotation, annotation_data
+from rx import Observable
 
 def parse_args():
     p = argparse.ArgumentParser()
