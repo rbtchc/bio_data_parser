@@ -24,9 +24,9 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('--export_csv', help='Export to csv file', action='store_true')
     p.add_argument('--fft', help='Apply FFT bandpass filter', action='store_true')
-    p.add_argument('--plot_type', nargs=1, default=None, type=int, choices=[0, 5, 9, 12], \
+    p.add_argument('--plot_type', default=None, type=int, choices=[0, 5, 9, 12], \
                    help='0: Acc, 5: ECG, 9: PPG 125 Hz, 12: PPG 512 Hz)')
-    p.add_argument('raw_data_file', nargs=1, help='Specify the raw data file')
+    p.add_argument('raw_data_file', help='Specify the raw data file')
     p.add_argument('annotation_file', nargs='?', help='Specify the annotation file')
     return vars(p.parse_args())
 
@@ -47,7 +47,7 @@ def data_handler(arg_fname, data_type, freq, fn_filters, data, fn_reseq, plot_fn
         if args["export_csv"]:
             np.savetxt(args[arg_fname], x, delimiter=',')
 
-        if args["plot_type"] and args["plot_type"][0] == data_type:
+        if args["plot_type"] != None and args["plot_type"] == data_type:
             plot_fn(ax1, ax2, x, freq)
 
     x = Observable.just(data) \
@@ -90,7 +90,7 @@ def group_by_handler(x):
     x.subscribe(**_group_by_handlers[x.key])
 
 def annotation_handler():
-    if args["plot_type"]:
+    if args["plot_type"] != None:
         plot_annotation(ax1, annotation_data)
 
 if __name__ == "__main__":
@@ -99,10 +99,10 @@ if __name__ == "__main__":
     print args
 
     ax1 = ax2 = None
-    if args["plot_type"]: _, (ax1, ax2) = plot.subplots(2, 1)
+    if args["plot_type"] != None: _, (ax1, ax2) = plot.subplots(2, 1)
 
     # prepare something for later use
-    basename = os.path.splitext(os.path.basename(args["raw_data_file"][0]))[0]
+    basename = os.path.splitext(os.path.basename(args["raw_data_file"]))[0]
     for n in ["acc", "ecg", "ppg125", "ppg512"]:
         args[n+"_csv"] = basename + "_" + n + ".csv"
 
@@ -118,10 +118,10 @@ if __name__ == "__main__":
                   .filter(lambda x: True if x else False) \
                   .subscribe(on_next=parse_annotation, on_completed=annotation_handler)
 
-    Observable.from_(open(args["raw_data_file"][0])) \
+    Observable.from_(open(args["raw_data_file"])) \
               .map(lambda x: x.strip()) \
               .group_by(group_key_generator) \
               .subscribe(group_by_handler)
 
-    if args["plot_type"]: plot.show()
+    if args["plot_type"] != None: plot.show()
 
