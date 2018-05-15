@@ -10,6 +10,7 @@ acc_data = []
 ecg_data = []
 ppg125_data = []
 ppg512_data = []
+hr_data = []
 
 def convert_ppg_to_mv(v):
     if v >= (1<<22):
@@ -61,6 +62,12 @@ def parse_raw_ppg512(x):
 def parse_raw_ecg(x):
     """ Parse one line of raw ecg data and add it to ecg data """
     parse_raw_hr_signals(x, range(2, 14), convert_ecg_to_mv, ecg_data)
+
+def parse_raw_hr(x):
+    """ Parse one line of synthesis heartrate data"""
+    items = x.split(',')
+    nums = map(int, items)
+    hr_data.append([nums[2], nums[3] & 0xff, nums[4], nums[15]])
 
 def calc_ts(x):
     base_ms = 0

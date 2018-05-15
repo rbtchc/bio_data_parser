@@ -15,6 +15,7 @@ from parser import parse_raw_acc, acc_data
 from parser import parse_raw_ecg, ecg_data
 from parser import parse_raw_ppg125, ppg125_data
 from parser import parse_raw_ppg512, ppg512_data
+from parser import parse_raw_hr, hr_data
 from plots import plot_time_domain, plot_freq_domain, plot_annotation
 from rx import Observable
 
@@ -71,6 +72,31 @@ def ppg125_data_handler():
 def ppg512_data_handler():
     data_handler("ppg512_csv", 12, PPG_FS_512, [ppg512_bp_filter], ppg512_data, ppg512_reseq)
 
+def hr_data_handler():
+    if not args["export_csv"]:
+        return
+
+    with open(args['hr_csv'], 'w') as out:
+        out.write("#timestamp,reported_hr,original_hr,confidence,is_drop\n")
+        #print hr.shape
+        for i in xrange(len(hr_data)):
+            beats, confidence, local_ts, ts = hr_data[i][:]
+            drop = 0
+            if confidence == 255:
+                #'drop bcz confidence == -1'
+                drop = 1
+            elif confidence in [0, 1]:
+                if i > 0:
+                    if hr_data[i-1][1] == 3:
+                        beats = hr_data[i-1][0]
+                    else:
+                        #'drop, bcz prev confidence in [0, 1, 2, 255]'
+                        drop = 1
+                else:
+                    drop = 1
+            out.write("%d,%d,%d,%d,%d\n" % (ts, beats, hr_data[i][0], confidence, drop))
+
+
 def group_key_generator(x):
     return x.split(',')[0]
 
@@ -78,7 +104,8 @@ _group_by_handlers = {
         '0':  {"on_next": parse_raw_acc,    "on_completed": acc_data_handler},
         '5':  {"on_next": parse_raw_ecg,    "on_completed": ecg_data_handler},
         '9':  {"on_next": parse_raw_ppg125, "on_completed": ppg125_data_handler},
-        '12': {"on_next": parse_raw_ppg512, "on_completed": ppg512_data_handler}
+        '12': {"on_next": parse_raw_ppg512, "on_completed": ppg512_data_handler},
+        '22': {"on_next": parse_raw_hr,     "on_completed": hr_data_handler}
         }
 
 def group_by_handler(x):
@@ -101,7 +128,7 @@ if __name__ == "__main__":
 
     # prepare something for later use
     basename = os.path.splitext(os.path.basename(args["raw_data_file"]))[0]
-    for n in ["acc", "ecg", "ppg125", "ppg512"]:
+    for n in ["acc", "ecg", "ppg125", "ppg512", "hr"]:
         args[n+"_csv"] = basename + "_" + n + ".csv"
 
     # Ideally, observables can be executed in different threads.
