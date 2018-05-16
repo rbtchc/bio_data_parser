@@ -17,10 +17,15 @@ def convert_ppg_to_mv(v):
         v = v - (1<<23)
     return (v * 3.2 * 1000) / 65536
 
+EKG_VPP = 4.
+EKG_BITS = 23
+EKG_ADC_LSB = EKG_VPP / (1 << EKG_BITS)
+EKG_GAIN = 6
+
 def convert_ecg_to_mv(v):
     if v >= (1<<22):
         v = v - (1<<23)
-    return (v * 1000) / (6 * 2097152)
+    return v * EKG_ADC_LSB * 1000.0 / EKG_GAIN
 
 def is_ecg(t):
     return t == TYPE_ECG
