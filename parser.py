@@ -146,12 +146,10 @@ def parse_data(file_obj, signal_type):
 
         a = l.rstrip("\n").split(',')
         # extraction
-        if is_ecg(signal_type):
+        if is_ecg(signal_type) or is_ppg512(signal_type):
             row = a[2:14]
         elif is_ppg125(signal_type):
             row = a[2:13:2]
-        elif is_ppg512(signal_type):
-            row = a[2:14]
         else:
             print 'unknown type', signal_type
             continue
