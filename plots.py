@@ -55,7 +55,7 @@ def plot_low_pass_filter(ax, fs, cutoff):
 
 def plot_time_domain(ax, data, color='b'):
     ax.plot(data[:,0], data[:,1], color)
-    ax.set_xlabel("Epoch Time (ms)")
+    ax.set_xlabel("Sequence number")
     ax.set_ylabel("MV")
 
 def plot_ecg(data):
