@@ -1,16 +1,16 @@
 import numpy as np
 import re
 
-TYPE_ECG=5
-TYPE_PPG125=9
-TYPE_PPG512=12
+TYPE_ECG     = 5
+TYPE_PPG125  = 9
+TYPE_PPG512  = 12
 MSEC_PER_SEC = 1000
 
-acc_data = []
-ecg_data = []
+acc_data    = []
+ecg_data    = []
+hr_data     = []
 ppg125_data = []
 ppg512_data = []
-hr_data = []
 
 def convert_ppg_to_mv(v):
     if v >= (1<<22):
