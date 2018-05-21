@@ -2,7 +2,7 @@ import scipy
 import numpy as np
 from scipy import signal
 
-ACC_FS = 20
+ACC_FS = 100
 ECG_FS = 512
 PPG_FS_125 = 125 # need to skip ambient light data 
 PPG_FS_512 = 512 # don't skip any received data, ambient data has been skipped by the watch
@@ -30,7 +30,7 @@ def high_pass_filter(data, fs, cutoff, order=3):
 def low_pass_filter(data, fs, cutoff, order=3):
     return butter_filter(data, fs, cutoff, btype='lowpass', order=order)
 
-def acc_bp_filter(data, fs=100):
+def acc_bp_filter(data, fs=ACC_FS):
     for i in range(2,5):
         data[:,i] = butter_bandpass_filter(data[:,i], fs, HIGH_PASS_CUTOFF, LOW_PASS_CUTOFF)
     return data
