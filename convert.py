@@ -25,9 +25,14 @@ def get_interpolated_ts(ts, ratio):
         new_ts = np.append(new_ts, tmp) if new_ts is not None else tmp
     return new_ts
 
-def convert_ecg_to_mv(raw, ratio=1000./6/2097152):
-    idx = np.where(raw >= 4194304)
-    raw[idx] -= 8388608
+EKG_VPP = 4.
+EKG_BITS = 23
+EKG_ADC_LSB = EKG_VPP / (1 << EKG_BITS)
+EKG_GAIN = 6
+
+def convert_ecg_to_mv(raw, ratio=(EKG_ADC_LSB * 1000.0 / EKG_GAIN)):
+    idx = np.where(raw >= (1<<22))
+    raw[idx] -= (1<<23)
     return raw * ratio
 
 def convert_ppg_to_mv(raw):
